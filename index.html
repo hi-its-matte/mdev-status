@@ -2,34 +2,130 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Status Apps</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MatteDev Status - Monitoraggio Servizi</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%236366f1' width='100' height='100'/><circle cx='50' cy='50' r='30' fill='%23fff'/></svg>">
 
   <!-- Firebase -->
-  <!-- Firebase compat (non usa import/export) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 
 <body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="logo">
+        <span class="logo-icon">⚡</span>
+        <span>MatteDev Status</span>
+      </a>
+      <div class="nav-links">
+        <a href="#apps">Applicazioni</a>
+        <a href="#health-check">Salute Servizi</a>
+        <a href="https://privacy.mattedev.com">Privacy</a>
+      </div>
+    </div>
+  </nav>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-logo">MatteDev Status - <a href="privacy.html">Privacy</a></div>
-</nav>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">🔍 Monitoraggio Reale</div>
+      <h1>MatteDev Status</h1>
+      <p>Monitoraggio in tempo reale di tutti i servizi MatteDev</p>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-value" id="total-apps">0</span>
+          <span class="stat-label">Applicazioni</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value online" id="online-apps">0</span>
+          <span class="stat-label">Online</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value offline" id="offline-apps">0</span>
+          <span class="stat-label">Offline</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-background">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+    </div>
+  </section>
 
-<!-- HEADER -->
-<section class="projects-header">
-  <h1>MatteDev Status</h1>
-  <p>Monitoraggio in tempo reale delle applicazioni MatteDev</p>
-</section>
+  <!-- Health Check Section -->
+  <section class="health-section" id="health-check">
+    <div class="section-container">
+      <div class="section-header">
+        <h2>🏥 Salute dei Servizi Critici</h2>
+        <p>Stato dei servizi essenziali dell'infrastruttura</p>
+      </div>
+      <div class="health-grid">
+        <div class="health-card server-card" id="server-health-card">
+          <div class="health-header">
+            <h3>🚀 API Server</h3>
+            <div class="health-pulse" id="server-pulse"></div>
+          </div>
+          <p class="health-url">HEALTH CHECK</p>
+          <div class="health-status" id="server-status">
+            <span class="status-badge checking">Verifica in corso...</span>
+          </div>
+          <div class="health-details">
+            <div class="detail-item">
+              <span class="label">Ultimo Check:</span>
+              <span id="server-last-check">--:--:--</span>
+            </div>
+            <div class="detail-item">
+              <span id="server-uptime">Calcolo...</span>
+            </div>
+          </div>
+        </div>
 
-<!-- MAIN -->
-<section class="projects-main">
-  <div class="projects-grid normal-projects" id="apps-container">
-    <!-- CARDS GENERATE VIA JS -->
-  </div>
-</section>
-<script src="app.js"></script>
+        <div class="health-card ai-card" id="ai-status-card">
+          <div class="health-header">
+            <h3>🤖 AI API</h3>
+            <div class="health-pulse" id="ai-pulse"></div>
+          </div>
+          <p class="health-url">Lo stato della ai dipende dal server.</p>
+          <div class="health-status" id="ai-status">
+            <span class="status-badge checking">Verifica...</span>
+          </div>
+          <div class="health-details">
+            <div class="detail-item">
+              <span class="label">Ultimo:</span>
+              <span id="ai-last-check">--:--:--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Applications Section -->
+  <section class="apps-section" id="apps">
+    <div class="section-container">
+      <div class="section-header">
+        <h2>📱 Applicazioni in Monitoraggio</h2>
+        <p>Stato attuale di tutti i servizi</p>
+      </div>
+      <div class="apps-grid" id="apps-container">
+        <div class="loading-skeleton"></div>
+        <div class="loading-skeleton"></div>
+        <div class="loading-skeleton"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p>&copy; 2026 MatteDev Studio. Tutti i diritti riservati.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
 </body>
 </html>

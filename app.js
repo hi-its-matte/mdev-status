@@ -29,6 +29,8 @@ let lastUpdateElement;
 let totalAppsElement;
 let onlineAppsElement;
 let offlineAppsElement;
+let serverResponseElement;
+let aiResponseElement;
 
 // ============================================
 // STATE MANAGEMENT
@@ -38,6 +40,8 @@ let aiIsOnline = false;
 let allApps = {};
 let serverHealthCheckCount = 0;
 let serverHealthCheckSuccess = 0;
+let serverLastStatus = '';
+let aiLastStatus = '';
 // AI health is derived from server state; no independent counters
 
 // ============================================
@@ -48,28 +52,92 @@ async function checkServerHealth() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     
-    const response = await fetch('https://health-api.mattedev.com', {
+    const response = await fetch('https://health-api.mattedev.com/', {
       method: 'GET',
       signal: controller.signal
     });
     
     clearTimeout(timeoutId);
     serverIsOnline = response.ok;
+    serverLastStatus = `${response.status} ${response.statusText}`;
     if (serverIsOnline) serverHealthCheckSuccess++;
   } catch (error) {
     serverIsOnline = false;
-    console.log('Server offline:', error.message);
+    serverLastStatus = error && error.message ? error.message : String(error);
+    console.log('Server offline:', serverLastStatus);
   }
   
   serverHealthCheckCount++;
   updateServerStatus();
-  // AI depends on the server: se il server è online, anche l'AI è considerata online
-  updateAIStatus();
+  // AI depends on the server: if server is online, perform AI health check;
+  // otherwise mark AI offline.
+  if (serverIsOnline) {
+    // perform AI health check (non-blocking)
+    checkAIHealth();
+  } else {
+    aiIsOnline = false;
+    aiLastStatus = 'Server offline';
+    updateAIStatus();
+  }
 }
 
 // NOTE: AI health is derived from the server state. No independent health check is
 // executed client-side to avoid inconsistent UX when the AI is known to depend
 // on the main API server.
+
+// ============================================
+// HEALTH CHECK - AI (runs only if server is online)
+// ============================================
+async function checkAIHealth() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch('https://ai-api.mattedev.com/health', {
+      method: 'GET',
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    // default status
+    aiLastStatus = `${response.status} ${response.statusText}`;
+    let ok = response.ok;
+
+    // try to inspect body for health indicators
+    try {
+      const text = await response.text();
+      // attempt to parse JSON
+      try {
+        const json = JSON.parse(text);
+        if (json && typeof json === 'object') {
+          if (json.status) ok = /ok|healthy|up|true|online/i.test(String(json.status));
+          else if (typeof json.healthy !== 'undefined') ok = !!json.healthy;
+        }
+      } catch (e) {
+        // not JSON, use text heuristics
+        if (!/ok|healthy|alive|up/i.test(text)) ok = ok && false;
+      }
+      // include a short snippet in the status for debugging
+      const snippet = text.trim().slice(0, 120);
+      if (snippet) aiLastStatus += ` - ${snippet}`;
+    } catch (e) {
+      // ignore body parsing errors
+    }
+
+    aiIsOnline = !!ok;
+  } catch (error) {
+    aiIsOnline = false;
+    aiLastStatus = error && error.message ? error.message : String(error);
+    console.log('AI health check failed:', aiLastStatus);
+  }
+
+  // record ai last check timestamp (independent from server)
+  if (aiLastCheck) aiLastCheck.textContent = new Date().toLocaleTimeString('it-IT', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+
+  updateAIStatus();
+}
 
 // Update della UI per lo stato del server
 function updateServerStatus() {
@@ -88,6 +156,7 @@ function updateServerStatus() {
   }
   
   if (serverLastCheck) serverLastCheck.textContent = timestamp;
+  if (serverResponseElement) serverResponseElement.textContent = serverLastStatus || '--';
   
   // Calcola uptime
   if (serverHealthCheckCount > 0 && serverUptime) {
@@ -108,8 +177,7 @@ function updateAIStatus() {
     second: '2-digit'
   });
 
-  aiIsOnline = !!serverIsOnline;
-
+  // Do NOT override `aiIsOnline` here — it's set by the AI health check.
   if (aiIsOnline) {
     if (aiStatusElement) aiStatusElement.innerHTML = '<span class="status-badge online">✓ ONLINE</span>';
     if (aiPulse) { aiPulse.classList.add('online'); aiPulse.classList.remove('offline'); }
@@ -121,6 +189,7 @@ function updateAIStatus() {
   }
 
   if (aiLastCheck) aiLastCheck.textContent = timestamp;
+  if (aiResponseElement) aiResponseElement.textContent = aiLastStatus || '--';
   updateLastUpdate();
 }
 
@@ -224,6 +293,8 @@ function init() {
   totalAppsElement = document.getElementById('total-apps');
   onlineAppsElement = document.getElementById('online-apps');
   offlineAppsElement = document.getElementById('offline-apps');
+  serverResponseElement = document.getElementById('server-response');
+  aiResponseElement = document.getElementById('ai-response');
   // Carica le applicazioni da Firebase
   loadApplications();
   

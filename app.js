@@ -42,8 +42,10 @@ let serverHealthCheckCount = 0;
 let serverHealthCheckSuccess = 0;
 let serverLastStatus = '';
 let aiLastStatus = '';
-// AI health is derived from server state; no independent counters
-
+const GET = async (url) => {
+  const res = await fetch(url, { method: 'POST' });
+  return res.json();
+};
 // ============================================
 // HEALTH CHECK - SERVER
 // ============================================
@@ -52,7 +54,7 @@ async function checkServerHealth() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     
-    const response = await fetch('https://health-api.mattedev.com/', {
+    const response = await fetch('https://health-api.mattedev.com', {
       method: 'GET',
       signal: controller.signal
     });
@@ -93,7 +95,7 @@ async function checkAIHealth() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const response = await fetch('https://ai-api.mattedev.com/health', {
+    const response = await GET('https://ai-api.mattedev.com/health', {
       method: 'GET',
       signal: controller.signal
     });

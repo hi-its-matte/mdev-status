@@ -42,10 +42,7 @@ let serverHealthCheckCount = 0;
 let serverHealthCheckSuccess = 0;
 let serverLastStatus = '';
 let aiLastStatus = '';
-const GET = async (url) => {
-  const res = await fetch(url, { method: 'POST' });
-  return res.json();
-};
+
 // ============================================
 // HEALTH CHECK - SERVER
 // ============================================
@@ -95,20 +92,20 @@ async function checkAIHealth() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    const response = await GET('https://ai-api.mattedev.com/health', {
+    const response = await fetch('https://ai-api.mattedev.com/health', {
       method: 'GET',
       signal: controller.signal
     });
 
     clearTimeout(timeoutId);
-    // default status
-    aiLastStatus = `${response.status} ${response.statusText}`;
+    // dettaglio: solo il codice di stato (es. "200"), come per il server
+    aiLastStatus = `${response.status}`;
     let ok = response.ok;
 
-    // try to inspect body for health indicators
+    // try to inspect body for health indicators (solo per decidere ok/offline,
+    // non viene più mostrato come dettaglio)
     try {
       const text = await response.text();
-      // attempt to parse JSON
       try {
         const json = JSON.parse(text);
         if (json && typeof json === 'object') {
@@ -119,9 +116,6 @@ async function checkAIHealth() {
         // not JSON, use text heuristics
         if (!/ok|healthy|alive|up/i.test(text)) ok = ok && false;
       }
-      // include a short snippet in the status for debugging
-      const snippet = text.trim().slice(0, 120);
-      if (snippet) aiLastStatus += ` - ${snippet}`;
     } catch (e) {
       // ignore body parsing errors
     }
